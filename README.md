@@ -3,6 +3,14 @@
 ### Bajar archivo
 `git clone <link>`
 
+### Crear entorno virtual para trabajar
+#### Windows
+1. Ejecutar en terminar `py -m venv miau-venv`
+2. Presionar F1 y escribir `Python: Select Interpreter`
+3. Seleccionar el que tiene `miau-venv`
+4. Presionar F1 y escribir `Create New Terminal`
+5. Si se instalo correctamente, deberia aparecer a la izquierda `(miau-venv)`
+
 ### Instalacion
 
 1. Ejecutar maquina virtual: Si estas en Windows `.\miau\venv\Scripts\activate`
