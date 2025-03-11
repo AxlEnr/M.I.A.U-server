@@ -20,6 +20,7 @@ from django.urls import path, include
 #ROUTES TO ACCESS THE METHODS
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('user_api/', include('user_api.urls')) #PATHS FROM user directory
+    path('user_api/', include('user_api.urls')), #PATHS FROM user directory
+    path('codeQR/', include('codeQR.urls')) #PATHS FROM QR directory
 ]
 
