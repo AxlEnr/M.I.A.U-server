@@ -4,6 +4,9 @@ from user.models import User
 from .serializers import UserSerializer
 from django.shortcuts import get_object_or_404 #Show 404 Errors
 from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.hashers import check_password
 
 #GET ALL USERS IN DB
 @api_view(['GET'])
@@ -33,10 +36,27 @@ def update_data_user(request, user_id):
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
 
-#DELETE USER
-@api_view(['DELETE'])
+# DEACTIVATE USER
+@api_view(['PUT'])
 def delete_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
-    user.delete()
-    return Response({"message":  "User has been deleted from DB"}, status=status.HTTP_204_NO_CONTENT)
-    
+    user.is_active = False  # Desactiva al usuario en lugar de modificar datos
+    user.save()
+    return Response({'message': 'Usuario desactivado'}, status=status.HTTP_200_OK)
+
+class LoginView(APIView):
+    def post(self, request, *args, **kwargs):
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validamos la contraseña usando check_password
+        if not check_password(password, user.password):
+            return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Si las credenciales son correctas, devolvemos una respuesta exitosa
+        return Response({"message": "Login successful"}, status=status.HTTP_200_OK)
