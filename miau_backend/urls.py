@@ -17,11 +17,24 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-#ROUTES TO ACCESS THE METHODS
+# ROUTES TO ACCESS THE METHODS
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('user_api/', include('user_api.urls')), #PATHS FROM user directory
-    path('codeQR/', include('codeQR.urls')), #PATHS FROM QR directory
-    path('prueba/', include('prueba.urls'))
+    
+    # Separar cada include en una línea diferente
+    path('api/', include('adoptionfilters.urls')),
+    path('api/', include('chats.urls')),
+    path('api/', include('codeQR.urls')),
+    path('api/', include('comments.urls')),
+    path('api/', include('emailverification.urls')),
+    path('api/', include('imgspost.urls')),
+    path('api/', include('logs.urls')),
+    path('api/', include('notifications.urls')),
+    path('api/', include('passwordresets.urls')),
+    path('api/', include('pet.urls')),
+    path('api/', include('post.urls')),
+    path('api/', include('statushistory.urls')),
+    path('api/', include('user_api.urls')),
+    path('api/', include('usersprofile.urls')),
 ]
 

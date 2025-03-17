@@ -4,7 +4,6 @@ import uuid
 from user.models import User
 
 class Chats(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     message = models.TextField()
     dateSent = models.DateTimeField(auto_now_add=True)
     read = models.BooleanField(default=False)
