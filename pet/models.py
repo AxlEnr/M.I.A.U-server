@@ -9,6 +9,10 @@ class Pet(models.Model):
         MEDIANO = 'Mediano', 'Mediano'
         GRANDE = 'Grande', 'Grande'
 
+    class statusAdoptios(models.IntegerChoices):
+        adopted = 1, 'This pet has family'
+        lost = 0, 'This pet doesnt have family' 
+
     name = models.CharField(max_length=30)
     age = models.IntegerField()
     breed = models.CharField(max_length=30)
@@ -16,3 +20,4 @@ class Pet(models.Model):
     petDetails = models.CharField(max_length=254, blank=True, null=True)
     qrId = models.ForeignKey(CodeQR, on_delete=models.CASCADE)
     userId = models.ForeignKey(User, on_delete=models.CASCADE)
+    statusAdoption = models.IntegerField(choices=statusAdoptios.choices, default=0)
