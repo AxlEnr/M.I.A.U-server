@@ -11,7 +11,6 @@ class StatusHistory(models.Model):
         DESAPARECIDO = 'Desaparecido', 'Desaparecido'
         ROBADO = 'Robado', 'Robado'
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.CharField(max_length=20, choices=StatusChoices.choices)
     newDate = models.DateField()
     petId = models.ForeignKey(Pet, on_delete=models.CASCADE)

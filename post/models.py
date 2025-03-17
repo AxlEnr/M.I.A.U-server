@@ -5,7 +5,6 @@ from user.models import User
 from pet.models import Pet
 
 class Post(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=50)
     description = models.CharField(max_length=254)
     postDate = models.DateField()

@@ -40,10 +40,20 @@ INSTALLED_APPS = [
     #INSTALL EVERY APP CREATED
     'rest_framework',
     'rest_framework_simplejwt',
-    'user',
-    'prueba',
-    'codeQR',
-
+    'user.apps.UserConfig',
+    'codeQR.apps.CodeqrConfig',
+    'adoptionfilters.apps.AdoptionfiltersConfig',
+    'chats.apps.ChatsConfig',
+    'comments.apps.CommentsConfig',
+    'emailverification.apps.EmailverificationConfig',
+    'imgspost.apps.ImgspostConfig',
+    'logs.apps.LogsConfig',
+    'notifications.apps.NotificationsConfig',
+    'passwordresets.apps.PasswordresetsConfig',
+    'post.apps.PostConfig',
+    'statushistory.apps.StatushistoryConfig',
+    'usersprofile.apps.UsersprofileConfig',
+    'pet.apps.PetConfig'
 ]
 
 REST_FRAMEWORK = {
