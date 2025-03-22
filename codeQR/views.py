@@ -37,8 +37,7 @@ def delete_QR(request, qr_id):
 @api_view(['POST'])
 def create_QR(request):
     serializer = CodeQRSerializer(data=request.data)
-    #If is valid, return a successful message
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # Devuelve los errores del serializador
