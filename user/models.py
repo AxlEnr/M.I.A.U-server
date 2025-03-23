@@ -1,5 +1,5 @@
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.auth.hashers import make_password
 
 # 🔹 Administrador del modelo User
@@ -55,3 +55,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         if self.password and not self.password.startswith("pbkdf2_"):
             self.password = make_password(self.password)
         super().save(*args, **kwargs)
+
+# 🔹 Modelo de perfil de usuario
+class UsersProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='user_profile')  # related_name único
+    profilePhoto = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    state = models.CharField(max_length=30, blank=True, null=True)
+    city = models.CharField(max_length=30, blank=True, null=True)
+    address = models.CharField(max_length=254, blank=True, null=True)
+
+    def __str__(self):
+        return f"Perfil de {self.user.name}"

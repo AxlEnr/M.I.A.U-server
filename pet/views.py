@@ -14,7 +14,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication  # Cambiar
 def pet_list(request):
     if request.method == 'GET':
         # Filtrar mascotas por el usuario autenticado
-        pets = Pet.objects.filter(userId=request.user)
+        pets = Pet.objects.all()
         serializer = PetSerializer(pets, many=True)
         return Response(serializer.data)
 
@@ -54,3 +54,75 @@ def pet_detail(request, pet_id):
     elif request.method == 'DELETE':
         pet.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+#vista para listar mascotas en adopcion y perdidas:
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def pet_list_filtered(request):
+    status_filter = request.query_params.get('status', None)
+    pets = Pet.objects.all()
+
+    if status_filter is not None:
+        pets = pets.filter(statusAdoption=status_filter)
+
+    serializer = PetSerializer(pets, many=True)
+    return Response(serializer.data)
+
+#vista para reportar mascotas perdiadas
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def report_lost_pet(request):
+    data = request.data.copy()
+    data['userId'] = request.user.id
+    data['qrId'] = 1  # Asignar un código QR por defecto
+    data['statusAdoption'] = 0  # Estado LOST
+
+    serializer = PetSerializer(data=data)
+    if serializer.is_valid():
+        pet = serializer.save()
+
+        # Crear un post asociado a la mascota perdida
+        post_data = {
+            'title': f"Mascota perdida: {pet.name}",
+            'description': request.data.get('description', ''),
+            'postDate': timezone.now().date(),
+            'petId': pet.id,
+            'userId': request.user.id,
+        }
+        post_serializer = PostSerializer(data=post_data)
+        if post_serializer.is_valid():
+            post_serializer.save()
+            return Response(post_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(post_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#vista para publicar mascotas en adopcion
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def publish_adoption_pet(request):
+    data = request.data.copy()
+    data['userId'] = request.user.id
+    data['qrId'] = 1  # Asignar un código QR por defecto
+    data['statusAdoption'] = 2  # Estado LOOKING
+
+    serializer = PetSerializer(data=data)
+    if serializer.is_valid():
+        pet = serializer.save()
+
+        # Crear un post asociado a la mascota en adopción
+        post_data = {
+            'title': f"Mascota en adopción: {pet.name}",
+            'description': request.data.get('description', ''),
+            'postDate': timezone.now().date(),
+            'petId': pet.id,
+            'userId': request.user.id,
+        }
+        post_serializer = PostSerializer(data=post_data)
+        if post_serializer.is_valid():
+            post_serializer.save()
+            return Response(post_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(post_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

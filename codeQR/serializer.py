@@ -5,3 +5,4 @@ class CodeQRSerializer(serializers.ModelSerializer):
     class Meta:
         model = CodeQR
         fields = '__all__'
+1

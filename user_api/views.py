@@ -22,6 +22,8 @@ class LoginView(APIView):
 
         try:
             user = User.objects.get(email=email)
+            if not user.check_password(password):  # Verificar la contraseña
+                return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
             if not user.is_active:
                 return Response({"error": "User is not active"}, status=status.HTTP_400_BAD_REQUEST)
         except User.DoesNotExist:
@@ -30,9 +32,13 @@ class LoginView(APIView):
         # 🔹 Generamos los tokens
         refresh = RefreshToken.for_user(user)
 
+        # 🔹 Serializamos el usuario para devolver sus datos
+        user_data = UserSerializer(user).data
+
         return Response({
             "refresh": str(refresh),
-            "access": str(refresh.access_token)
+            "access": str(refresh.access_token),
+            "user": user_data  # Incluimos los datos del usuario
         }, status=status.HTTP_200_OK)
 
 # 🔹 OBTENER USUARIO DE LA SESIÓN ACTUAL (Requiere autenticación)
