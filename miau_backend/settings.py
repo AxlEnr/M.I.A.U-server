@@ -12,10 +12,16 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import os
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Configuración para archivos multimedia
+MEDIA_URL = '/media/'  # URL base para servir archivos multimedia
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Ruta donde se almacenarán los archivos
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -27,7 +33,7 @@ SECRET_KEY = 'django-insecure-5i_!1^d1__8$%k)d(*ykwe+&fnisbu)%%$*72_)d(gl09t)j_b
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '192.168.1.95:8000', '192.168.1.95'
+    '192.168.1.64'
 ]
 
 
