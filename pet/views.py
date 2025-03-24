@@ -19,26 +19,29 @@ from reportlab.pdfgen import canvas
 import os
 
 # Vista para listar y crear mascotas
-@api_view(['GET', 'POST'])
-@authentication_classes([JWTAuthentication])  # Usar JWTAuthentication
+# Vista para listar mascotas
+# Vista para listar mascotas
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def pet_list(request):
-    if request.method == 'GET':
-        pets = Pet.objects.filter(userId=request.user)  # Filtrar mascotas por el usuario autenticado
-        serializer = PetSerializer(pets, many=True)
-        return Response(serializer.data)
+    pets = Pet.objects.filter(userId=request.user).select_related("qrId")
+    data = []
 
-    elif request.method == 'POST':
-        data = request.data.copy()
-        data['userId'] = request.user.id  # Asignar el ID del usuario autenticado
-        data['qrId'] = 1  # Asignar un código QR por defecto (ajusta esto según tu lógica)
+    for pet in pets:
+        pet_data = PetSerializer(pet).data
+        if pet.qrId:
+            pet_data['qrCode'] = {
+                "id": pet.qrId.id,  # ID del QR
+                "qr_code_url": pet.qrId.qr_code_url  # URL del QR
+            }
+        else:
+            pet_data['qrCode'] = None  # No hay QR generado aún
 
-        serializer = PetSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        data.append(pet_data)
 
+    return Response(data)
+      
 # Vista para obtener, actualizar o eliminar una mascota por ID
 @api_view(['GET', 'PUT', 'DELETE'])
 @authentication_classes([JWTAuthentication])  # Usar JWTAuthentication
@@ -66,7 +69,7 @@ def pet_detail(request, pet_id):
 
 # Vista para generar un código QR para una mascota
 @api_view(['POST'])
-@authentication_classes([JWTAuthentication])  # Usar JWTAuthentication
+@authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def generate_qr_for_pet(request, pet_id):
     try:
@@ -115,6 +118,7 @@ def generate_qr_for_pet(request, pet_id):
         "qr_code_url": qr_image_path,
         "pdf_url": pdf_path,
     }, status=status.HTTP_201_CREATED)
+
 
 @api_view(['POST'])
 @authentication_classes([JWTAuthentication])
