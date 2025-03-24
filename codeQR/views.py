@@ -29,8 +29,7 @@ def update_data_QR(request, qr_id ):
 @api_view(['PUT'])
 def delete_QR(request, qr_id):
     qr = get_object_or_404(qr, id=qr_id)
-    qr.is_active = False  # Desactiva
-    qr.save()
+    qr.delete()
     return Response({'message': 'Codigo QR desactivado'}, status=status.HTTP_200_OK)
 
 #POST USER DATA

@@ -33,7 +33,7 @@ SECRET_KEY = 'django-insecure-5i_!1^d1__8$%k)d(*ykwe+&fnisbu)%%$*72_)d(gl09t)j_b
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '192.168.1.64'
+    '192.168.1.95'
 ]
 
 
@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'user.apps.UserConfig',
-    'codeQR.apps.CodeqrConfig',
+    'codeQR',
     'adoptionfilters.apps.AdoptionfiltersConfig',
     'chats.apps.ChatsConfig',
     'comments.apps.CommentsConfig',
