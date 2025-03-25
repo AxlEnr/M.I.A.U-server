@@ -30,10 +30,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Ruta donde se almacenarán los a
 SECRET_KEY = 'django-insecure-5i_!1^d1__8$%k)d(*ykwe+&fnisbu)%%$*72_)d(gl09t)j_b'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
-    '192.168.1.95'
+    '137.131.25.37'
 ]
 
 
