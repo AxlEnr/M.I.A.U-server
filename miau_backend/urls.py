@@ -16,7 +16,7 @@ urlpatterns = [
     
     # Rutas de las aplicaciones
     path('api/', include('adoptionfilters.urls')),
-    path('api/', include('chats.urls')),
+    path('api/chats/', include('chats.urls')),
     path('api/', include('codeQR.urls')),
     path('api/', include('comments.urls')),
     path('api/', include('emailverification.urls')),

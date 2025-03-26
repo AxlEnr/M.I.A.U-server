@@ -36,3 +36,30 @@ def comments_detail(request, comment_id):
         comment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+from rest_framework import generics, permissions
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from .models import Comments
+from .serializers import CommentsSerializer
+from post.models import Post
+
+class CommentListCreateView(generics.ListCreateAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = CommentsSerializer
+
+    def get_queryset(self):
+        post_id = self.kwargs['post_id']
+        return Comments.objects.filter(postId=post_id).select_related('userId')
+
+    def perform_create(self, serializer):
+        post_id = self.kwargs['post_id']
+        post = Post.objects.get(id=post_id)
+        serializer.save(userId=self.request.user, postId=post)
+
+class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = Comments.objects.all()
+    serializer_class = CommentsSerializer
+
