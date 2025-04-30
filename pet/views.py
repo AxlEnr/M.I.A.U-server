@@ -17,31 +17,6 @@ import qrcode
 from io import BytesIO
 from reportlab.pdfgen import canvas
 import os
-
-# Vista para listar y crear mascotas
-# Vista para listar mascotas
-# Vista para listar mascotas
-@api_view(['GET'])
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsAuthenticated])
-def pet_list(request):
-    pets = Pet.objects.filter(userId=request.user).select_related("qrId")
-    data = []
-
-    for pet in pets:
-        pet_data = PetSerializer(pet).data
-        if pet.qrId:
-            pet_data['qrCode'] = {
-                "id": pet.qrId.id,  # ID del QR
-                "qr_code_url": pet.qrId.qr_code_url  # URL del QR
-            }
-        else:
-            pet_data['qrCode'] = None  # No hay QR generado aún
-
-        data.append(pet_data)
-
-    return Response(data)
-      
 # Vista para obtener, actualizar o eliminar una mascota por ID
 @api_view(['GET', 'PUT', 'DELETE'])
 @authentication_classes([JWTAuthentication])  # Usar JWTAuthentication
@@ -214,7 +189,6 @@ from rest_framework import status
 from .models import Pet
 from .serializers import PetSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication  # Cambiar a JWT
-
 # Vista para listar y crear mascotas
 # Vista para listar y crear mascotas
 @api_view(['GET', 'POST'])
@@ -222,22 +196,30 @@ from rest_framework_simplejwt.authentication import JWTAuthentication  # Cambiar
 @permission_classes([IsAuthenticated])
 def pet_list(request):
     if request.method == 'GET':
-        # Filtrar mascotas por el usuario autenticado
-        pets = Pet.objects.filter(userId=request.user)  # Solo mascotas del usuario logueado
-        serializer = PetSerializer(pets, many=True)
-        return Response(serializer.data)
+        pets = Pet.objects.filter(userId=request.user).select_related("qrId")
+        data = []
+
+        for pet in pets:
+            pet_data = PetSerializer(pet).data
+            if pet.qrId:
+                pet_data['qrCode'] = {
+                    "id": pet.qrId.id,
+                    "qr_code_url": pet.qrId.qr_code_url
+                }
+            else:
+                pet_data['qrCode'] = None
+
+            data.append(pet_data)
+
+        return Response(data)
 
     elif request.method == 'POST':
-        # Asignar el usuario autenticado y un código QR por defecto
-        data = request.data.copy()
-        data['userId'] = request.user.id  # Asignar el ID del usuario autenticado
-        data['qrId'] = 1  # Asignar un código QR por defecto (ajusta esto según tu lógica)
-
-        serializer = PetSerializer(data=data)
+        serializer = PetSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(userId=request.user)  # <- AQUÍ asignas correctamente el usuario
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 # Vista para obtener, actualizar o eliminar una mascota por ID
 @api_view(['GET', 'PUT', 'DELETE'])
