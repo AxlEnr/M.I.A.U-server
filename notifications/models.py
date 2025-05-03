@@ -16,3 +16,4 @@ class Notifications(models.Model):
     read = models.BooleanField(default=False)
     notiDate = models.DateTimeField(auto_now_add=True)
     userId = models.ForeignKey(User, on_delete=models.CASCADE)
+    related_post_id = models.IntegerField(null=True, blank=True)

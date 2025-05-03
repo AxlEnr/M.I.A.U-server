@@ -5,5 +5,3 @@ class NotificationsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notifications
         fields = '__all__'
-
-        
