@@ -153,3 +153,47 @@ def logout(request):
     except Exception as e:
         traceback.print_exc()  # Esto mostrará el error completo en consola
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+import random
+import string
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.auth.hashers import make_password
+
+@api_view(['POST'])
+def reset_password(request):
+    email = request.data.get('email')
+    
+    if not email:
+        return Response({"error": "El correo electrónico es requerido"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Response({"error": "No existe un usuario con este correo electrónico"}, status=status.HTTP_404_NOT_FOUND)
+    
+    new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
+    user.password = make_password(new_password)
+    user.save()
+    
+    try:
+        # Añade logging para verificar las credenciales
+        logger.info(f"Intentando enviar email con: {settings.EMAIL_HOST_USER}")
+        
+        send_mail(
+            'Restablecimiento de contraseña - M.I.A.U',
+            f'Tu nueva contraseña es: {new_password}\n\nPor favor, cambia esta contraseña después de iniciar sesión.',
+            settings.EMAIL_HOST_USER,
+            [email],
+            fail_silently=False,
+        )
+        logger.info("Email enviado exitosamente")
+        return Response({"message": "Se ha enviado una nueva contraseña a tu correo electrónico"}, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error enviando email: {str(e)}", exc_info=True)
+        return Response({
+            "error": "Ocurrió un error al enviar el correo. Por favor intenta más tarde.",
+            "details": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        

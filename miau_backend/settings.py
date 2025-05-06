@@ -14,14 +14,15 @@ from pathlib import Path
 from datetime import timedelta
 import os
 from dotenv import load_dotenv
+load_dotenv() 
 
-load_dotenv()
-copoToken = os.getenv('COPOMEX_TOKEN')
-copoBaseUrl = os.getenv('COPOMEX_BASE_URL')
-BASE_URL="192.168.1.131:8000"
-
-def get_copomex_url(codigo_postal):
-    return f"{copoBaseUrl}/{codigo_postal}?token={copoToken}"
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST')
+EMAIL_HOST_PASSWORD = os.getenv('PASSWORD_HOST')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
