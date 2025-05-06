@@ -13,8 +13,15 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
+copoToken = os.getenv('COPOMEX_TOKEN')
+copoBaseUrl = os.getenv('COPOMEX_BASE_URL')
+BASE_URL="192.168.1.131:8000"
 
+def get_copomex_url(codigo_postal):
+    return f"{copoBaseUrl}/{codigo_postal}?token={copoToken}"
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,10 +38,11 @@ SECRET_KEY = 'django-insecure-5i_!1^d1__8$%k)d(*ykwe+&fnisbu)%%$*72_)d(gl09t)j_b
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
-    '137.131.25.37'
+    '137.131.25.37',
+    '*'
 ]
 
 
@@ -47,6 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_simplejwt.token_blacklist',
     #INSTALL EVERY APP CREATED
     'rest_framework',
     'rest_framework_simplejwt',

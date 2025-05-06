@@ -134,23 +134,22 @@ from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
+import traceback
 
 @api_view(['POST'])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def logout(request):
     try:
-        # Obtener el token de actualización del cuerpo de la solicitud
         refresh_token = request.data.get('refresh')
         if refresh_token:
-            # Invalidar el token de actualización
             token = RefreshToken(refresh_token)
             token.blacklist()
         else:
             return Response({"error": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"message": "Successfully logged out"}, status=status.HTTP_200_OK)
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        
+    except Exception as e:
+        traceback.print_exc()  # Esto mostrará el error completo en consola
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
