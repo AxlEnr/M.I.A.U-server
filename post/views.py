@@ -8,6 +8,10 @@ from pet.models import Pet
 from .serializers import PostSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication 
 from rest_framework.permissions import IsAuthenticated
+from pet.serializers import PetSerializer
+from imgspost.serializers import ImgsPostSerializer
+from pet.models import Pet
+from imgspost.models import ImgsPost
 
 @api_view(['GET'])
 def get_user_pets(request, user_id):
@@ -85,3 +89,24 @@ def post_detail(request, post_id):
                 pet.delete()
                 
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def user_posts(request):
+    posts = Post.objects.filter(userId=request.user)
+    post_serializer = PostSerializer(posts, many=True)
+
+    pet_ids = [post.petId.id for post in posts]
+    pets = Pet.objects.filter(id__in=pet_ids)
+    pet_serializer = PetSerializer(pets, many=True)
+    
+    post_ids = [post.id for post in posts]
+    images = ImgsPost.objects.filter(idPost__in=post_ids)
+    image_serializer = ImgsPostSerializer(images, many=True)
+    
+    return Response({
+        'posts': post_serializer.data,
+        'pets': pet_serializer.data,
+        'images': image_serializer.data,
+    })
