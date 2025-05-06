@@ -55,31 +55,33 @@ def post_detail(request, post_id):
     except Post.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-    # Verificar que el usuario es dueño del post
-    if post.userId != request.user:
-        return Response(
-            {'error': 'No tienes permiso para esta acción'},
-            status=status.HTTP_403_FORBIDDEN
-        )
-
     if request.method == 'GET':
+        # Permitir a cualquier usuario autenticado ver el post
         serializer = PostSerializer(post)
         return Response(serializer.data)
 
-    elif request.method == 'PUT':
-        serializer = PostSerializer(post, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    elif request.method == 'DELETE':
-        # Verificar si hay otras publicaciones para esta mascota
-        pet = post.petId
-        post.delete()
+    elif request.method in ['PUT', 'DELETE']:
+        # Solo el dueño puede modificar o eliminar
+        if post.userId != request.user:
+            return Response(
+                {'error': 'No tienes permiso para esta acción'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         
-        if not Post.objects.filter(petId=pet.id).exists():
-            # Solo eliminar la mascota si no tiene otras publicaciones
-            pet.delete()
+        if request.method == 'PUT':
+            serializer = PostSerializer(post, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        elif request.method == 'DELETE':
+            # Verificar si hay otras publicaciones para esta mascota
+            pet = post.petId
+            post.delete()
             
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            if not Post.objects.filter(petId=pet.id).exists():
+                # Solo eliminar la mascota si no tiene otras publicaciones
+                pet.delete()
+                
+            return Response(status=status.HTTP_204_NO_CONTENT)

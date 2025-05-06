@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 load_dotenv()
 copoToken = os.getenv('COPOMEX_TOKEN')
 copoBaseUrl = os.getenv('COPOMEX_BASE_URL')
+BASE_URL="192.168.1.131:8000"
 
 def get_copomex_url(codigo_postal):
     return f"{copoBaseUrl}/{codigo_postal}?token={copoToken}"

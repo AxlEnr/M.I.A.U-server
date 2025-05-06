@@ -39,9 +39,20 @@ def notifications_detail(request, notification_id):
 
 @api_view(['GET'])
 def get_user_notifications(request, user_id):
-    notifications = Notifications.objects.filter(userId=user_id).order_by('-notiDate')
-    serializer = NotificationsSerializer(notifications, many=True)
-    return Response(serializer.data)
+    try:
+        current_user = request.user
+        
+        notifications = Notifications.objects.filter(
+            userId=user_id,
+        ).exclude(
+            related_post__userId=current_user.id
+        ).order_by('-notiDate')
+        
+        serializer = NotificationsSerializer(notifications, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['POST'])
 def create_notification(request):
@@ -58,30 +69,83 @@ def mark_as_read(request, notification_id):
     notification.save()
     return Response({'status': 'marked as read'})
 
-# Nueva función para enviar notificaciones masivas
 @api_view(['POST'])
 def send_lost_pet_notification(request):
     post_id = request.data.get('post_id')
     pet_name = request.data.get('pet_name')
-    user_id = request.data.get('user_id')  # ID del usuario que reportó la mascota
+    user_id = request.data.get('user_id')
     
-    if not post_id or not pet_name:
-        return Response({'error': 'post_id and pet_name are required'}, status=status.HTTP_400_BAD_REQUEST)
+    if not post_id or not pet_name or not user_id:
+        return Response({'error': 'post_id, pet_name and user_id are required'}, 
+                       status=status.HTTP_400_BAD_REQUEST)
     
-    # Obtener todos los usuarios excepto el que reportó la mascota
-    users = User.objects.exclude(id=user_id)
+    try:
+        from post.models import Post
+        post = Post.objects.get(id=post_id)
+        
+        # Obtener todos los usuarios excepto el que reportó la mascota
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        users = User.objects.exclude(id=user_id)
+        
+        notifications = []
+        for user in users:
+            notification = Notifications(
+                notifType=Notifications.NotifTypeChoices.DESAPARECIDO_ALREDEDOR,
+                message=f"¡Se ha perdido {pet_name}! Ayuda a encontrarla.",
+                userId=user,
+                related_post=post  # Asociamos el post directamente
+            )
+            notifications.append(notification)
+        
+        # Usar bulk_create para mejor performance
+        Notifications.objects.bulk_create(notifications)
+        
+        return Response({
+            'status': 'notifications sent',
+            'count': len(notifications)
+        }, status=status.HTTP_201_CREATED)
+    except Post.DoesNotExist:
+        return Response({'error': 'Post no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+def send_adoption_pet_notification(request):
+    post_id = request.data.get('post_id')
+    pet_name = request.data.get('pet_name')
+    user_id = request.data.get('user_id')
     
-    notifications = []
-    for user in users:
-        notification = Notifications(
-            notifType=Notifications.NotifTypeChoices.DESAPARECIDO_ALREDEDOR,
-            message=f"¡Se ha perdido {pet_name}! Ayuda a encontrarla.",
-            userId=user,
-            related_post_id=post_id
-        )
-        notifications.append(notification)
+    if not post_id or not pet_name or not user_id:
+        return Response({'error': 'post_id, pet_name and user_id are required'}, 
+                       status=status.HTTP_400_BAD_REQUEST)
     
-    # Crear todas las notificaciones en una sola operación
-    Notifications.objects.bulk_create(notifications)
-    
-    return Response({'status': 'notifications sent'}, status=status.HTTP_201_CREATED)
+    try:
+        from post.models import Post
+        post = Post.objects.get(id=post_id)
+        
+        # Obtener todos los usuarios excepto el que publicó la mascota
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        users = User.objects.exclude(id=user_id)
+        
+        notifications = []
+        for user in users:
+            notification = Notifications(
+                notifType=Notifications.NotifTypeChoices.NUEVA_MASCOTA,
+                message=f"¡Nueva mascota en adopción: {pet_name}! ¿Quieres darle un hogar?",
+                userId=user,
+                related_post=post
+            )
+            notifications.append(notification)
+        
+        Notifications.objects.bulk_create(notifications)
+        
+        return Response({
+            'status': 'notifications sent',
+            'count': len(notifications)
+        }, status=status.HTTP_201_CREATED)
+    except Post.DoesNotExist:
+        return Response({'error': 'Post no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

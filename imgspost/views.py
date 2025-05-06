@@ -36,3 +36,8 @@ def imgs_post_detail(request, img_id):
         img.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+@api_view(['GET'])
+def imgs_by_post(request, post_id):
+    images = ImgsPost.objects.filter(idPost=post_id).order_by('-idPost')
+    serializer = ImgsPostSerializer(images, many=True)
+    return Response(serializer.data)
