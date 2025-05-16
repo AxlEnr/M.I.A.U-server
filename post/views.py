@@ -31,10 +31,10 @@ def get_user_pets(request, user_id):
 def post_list(request):
     if request.method == 'GET':
         posts = Post.objects.all()
-        serializer = PostSerializer(posts, many=True)
+        serializer = PostSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data)
-    elif request.method == 'POST':
-        # Verificar que la mascota pertenece al usuario
+        
+    if request.method == 'POST':
         pet_id = request.data.get('petId')
         try:
             pet = Pet.objects.get(id=pet_id, userId=request.user)
@@ -44,7 +44,14 @@ def post_list(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
             
-        serializer = PostSerializer(data=request.data)
+        # Añadir ubicación de la mascota al post si no se proporciona
+        post_data = request.data.copy()
+        if 'state' not in post_data:
+            post_data['state'] = pet.state
+        if 'city' not in post_data:
+            post_data['city'] = pet.city
+            
+        serializer = PostSerializer(data=post_data)
         if serializer.is_valid():
             serializer.save(userId=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)

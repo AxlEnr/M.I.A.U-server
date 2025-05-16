@@ -29,8 +29,4 @@ urlpatterns = [
     path('api/', include('statushistory.urls')),
     path('api/', include('user_api.urls')),
     path('api/', include('usersprofile.urls')),
-]
-
-# Servir archivos multimedia en desarrollo
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
