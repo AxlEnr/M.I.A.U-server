@@ -8,7 +8,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.exceptions import InvalidToken
-from user.models import User
+from user.models import User, UsersProfile
 from .serializers import UserSerializer
 import logging
 
@@ -98,19 +98,38 @@ def update_data_user(request, user_id):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # 🔹 ELIMINAR USUARIO (desactivar cuenta)
-@api_view(['PUT'])
+@api_view(['DELETE'])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def delete_user(request, user_id):
-    user = get_object_or_404(User, id=user_id)
-
-    # Verifica si el usuario autenticado es el mismo que está intentando eliminar
-    if request.user.id != user.id:
-        return Response({"error": "No tienes permisos para eliminar este usuario"}, status=status.HTTP_403_FORBIDDEN)
-
-    user.is_active = False
-    user.save()
-    return Response({'message': 'Usuario desactivado'}, status=status.HTTP_200_OK)
+    try:
+        user = User.objects.get(id=user_id)
+        
+        # Verificar que el usuario autenticado es el mismo que se quiere eliminar
+        if request.user.id != user.id:
+            return Response(
+                {"error": "No tienes permisos para eliminar este usuario"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Eliminar el usuario
+        user.delete()
+        
+        return Response(
+            {'message': 'Usuario eliminado permanentemente'},
+            status=status.HTTP_204_NO_CONTENT
+        )
+        
+    except User.DoesNotExist:
+        return Response(
+            {"error": "Usuario no encontrado"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 # 🔹 REFRESCAR TOKEN
 class CustomTokenRefreshView(TokenRefreshView):
@@ -196,4 +215,30 @@ def reset_password(request):
             "details": str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def update_profile_photo(request):
+    try:
+        user_profile, created = UsersProfile.objects.get_or_create(user=request.user)
         
+        if 'profilePhoto' not in request.FILES:
+            return Response({"error": "No se proporcionó una imagen"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user_profile.profilePhoto = request.FILES['profilePhoto']
+        user_profile.save()
+        
+        # Usa request.build_absolute_uri() para generar la URL completa
+        profile_photo_url = request.build_absolute_uri(user_profile.profilePhoto.url)
+        
+        return Response({
+            "message": "Foto de perfil actualizada exitosamente",
+            "profilePhoto": profile_photo_url  # Envía la URL completa
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Error actualizando foto de perfil: {str(e)}")
+        return Response(
+            {"error": "Error al actualizar la foto de perfil", "details": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

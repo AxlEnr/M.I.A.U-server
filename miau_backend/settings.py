@@ -28,8 +28,8 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Configuración para archivos multimedia
-MEDIA_URL = '/media/'  # URL base para servir archivos multimedia
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Ruta donde se almacenarán los archivos
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/

@@ -4,7 +4,7 @@ from codeQR.models import CodeQR
 
 class Pet(models.Model):
     class SizeChoices(models.TextChoices):
-        PEQUENO = 'Pequeño', 'Pequeño'
+        PEQUENO = 'Pequeno', 'Pequeño'
         MEDIANO = 'Mediano', 'Mediano'
         GRANDE = 'Grande', 'Grande'
 
