@@ -12,10 +12,24 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import os
+from dotenv import load_dotenv
+load_dotenv() 
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST')
+EMAIL_HOST_PASSWORD = os.getenv('PASSWORD_HOST')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Configuración para archivos multimedia
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -24,10 +38,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-5i_!1^d1__8$%k)d(*ykwe+&fnisbu)%%$*72_)d(gl09t)j_b'
 
 # SECURITY WARNING: don't run with debug turned on in production!
+
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '192.168.1.95:8000', '192.168.1.95'
+    '137.131.25.37',
+    '*'
 ]
 
 
@@ -40,11 +56,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_simplejwt.token_blacklist',
     #INSTALL EVERY APP CREATED
     'rest_framework',
     'rest_framework_simplejwt',
     'user.apps.UserConfig',
-    'codeQR.apps.CodeqrConfig',
+    'codeQR',
     'adoptionfilters.apps.AdoptionfiltersConfig',
     'chats.apps.ChatsConfig',
     'comments.apps.CommentsConfig',

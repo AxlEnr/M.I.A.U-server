@@ -1,5 +1,5 @@
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.auth.hashers import make_password
 
 # 🔹 Administrador del modelo User
@@ -36,7 +36,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)
     phone_number = models.CharField(max_length=12, null=True, blank=True)
-    address = models.CharField(max_length=254)
+    street = models.CharField(max_length=100, null=True, blank=True)
+    neighborhood = models.CharField(max_length=100, null=True, blank=True)
+    cp = models.CharField(max_length=10, null=True, blank=True)
+    city = models.CharField(max_length=70, null=True, blank=True)
+    state = models.CharField(max_length=70, null=True, blank=True)
+    country = models.CharField(max_length=70, default="México")
     created_date = models.DateField(auto_now_add=True)   
     status = models.IntegerField(choices=StatusChoices.choices, default=StatusChoices.ACTIVATED)
     role = models.CharField(choices=Roles.choices, max_length=20, default=Roles.USER)
@@ -55,3 +60,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         if self.password and not self.password.startswith("pbkdf2_"):
             self.password = make_password(self.password)
         super().save(*args, **kwargs)
+
+# 🔹 Modelo de perfil de usuario
+class UsersProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='user_profile')  # related_name único
+    profilePhoto = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    state = models.CharField(max_length=30, blank=True, null=True)
+    city = models.CharField(max_length=30, blank=True, null=True)
+    address = models.CharField(max_length=254, blank=True, null=True)
+
+    def __str__(self):
+        return f"Perfil de {self.user.name}"
