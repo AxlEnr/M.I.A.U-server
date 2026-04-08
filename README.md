@@ -1,38 +1,71 @@
-## MIAU BACKEND DJANGO
+# 🐾 MIAU BACKEND DJANGO
 
-### Bajar archivo
-`git clone <link>`
+Este es el servicio de backend para la plataforma **MIAU**, desarrollado con **Django 5.1**. El proyecto utiliza una arquitectura MVC simplificada y está completamente contenedorizado con **Docker** para asegurar un entorno de desarrollo consistente.
 
-### Crear entorno virtual para trabajar
-#### Windows
-1. Ejecutar en terminar `py -m venv miau-venv`
-2. Presionar F1 y escribir `Python: Select Interpreter`
-3. Seleccionar el que tiene `miau-venv`
-4. Presionar F1 y escribir `Create New Terminal`
-5. Si se instalo correctamente, deberia aparecer a la izquierda `(miau-venv)`
+---
 
-### Instalacion
+## Guía de Instalación y Configuración
 
-1. Ejecutar maquina virtual: Si estas en Windows `.\miau\venv\Scripts\activate`
-2. Instalar requerimientos: `pip install django djangorestframework`
+Sigue estos pasos para levantar el entorno local en pocos minutos.
 
-### Comandos importantes
+### 1. Clonar el repositorio
+```bash
+git clone <link-del-repositorio>
+cd miau-backend
+```
 
-1. Ejecutar servidor `python manage.py runserver`
-2. Crear direcorio para trabajar modelos, tests y vistas (Conocidos en django como apps) `python manage.py startapp <nombre>`
+### 2. Configurar variables de entorno
+El sistema requiere un archivo .env para gestionar credenciales y configuraciones sensibles.
+```bash
+cp .env.example .env
+```
+Nota: Abre el archivo .env y asegúrate de configurar correctamente la conexión a la base de datos y tu SECRET_KEY.
 
-### Migrar BD
-1. Ejecutar `python manage.py makemigrations`
-2. Ejecutar `python manage.py migrate`
+### 3. Construcción y despliegue con Docker
+El sistema requiere un archivo .env para gestionar credenciales y configuraciones sensibles.
+```bash
+docker compose up -d --build
+```
 
-#### Nota
-Directorios como iser_api fueron creados a mano, creando los 4 archivos mostrados manualmente, por lo que es importante observar como se hicieron
+### 4. Ejecutar migraciones
+```bash
+# Crear archivos de migración
+docker compose exec miau-container python manage.py makemigrations
 
-#### Nota 2 
-No borrar ningun archivo del venv o de ni de miau_backend o puede dejar de funcionar la app
+# Aplicar cambios a la base de datos
+docker compose exec miau-container python manage.py migrate
+```
 
-#### Nota 3
-No borrar los __init__ pues son necesarios para que funcione cada app creada
+### 5. Crear Usuario Administrador
+```bash
+docker compose exec miau-container python manage.py createsuperuser
+```
 
-#### Nota 4
-No olvidar agregar las apps en el INSTALLED_APPS de wsgi.py en miau_backend para que funcione, ademas de agregar los paths
+### NOTAS DE DESARROLLO
+Para mantener la integridad del proyecto, sigue estas recomendaciones:
+## Estructura de las Apps
+
+    Creación Manual: Directorios como user_api fueron estructurados manualmente. Al crear nuevas APIs, asegúrate de incluir los archivos esenciales: models.py, serializers.py, views.py y urls.py.
+
+    Archivos Init: NUNCA borres los archivos __init__.py. Son los que permiten que Python trate las carpetas como paquetes y los import funcionen correctamente.
+
+## Entorno de Python
+
+    Dependencias: Si instalas una nueva librería, agrégala manualmente al requirements.txt o actualízalo desde un entorno limpio. No incluyas librerías del sistema operativo.
+
+    Carpeta venv: No es necesario (ni recomendable) subir la carpeta venv al repositorio. Docker ignora tu entorno local y construye el suyo propio basado en el archivo Dockerfile.
+
+## Configuración de Nuevas Apps
+
+Cada vez que crees una aplicación nueva, es obligatorio:
+
+    Registrarla en la lista INSTALLED_APPS dentro de miau_backend/settings.py.
+
+    Incluir sus rutas en el archivo urls.py principal ubicado en la carpeta del núcleo (miau_backend/).
+
+### STACK UTILIZADO
+Lenguaje: Python 3.13-slim
+Framework: Django 5.1
+Servidor WSGI: Gunicorn
+Contenedores: Docker & Docker Compose 
+

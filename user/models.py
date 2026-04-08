@@ -52,7 +52,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_superuser = models.BooleanField(default=False)  # Superusuario
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["name", "first_name", "age", "phone_number", "address"]
+    REQUIRED_FIELDS = ["name", "first_name", "age", "phone_number"]
 
     objects = UserManager()
 
