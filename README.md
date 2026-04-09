@@ -41,6 +41,25 @@ docker compose exec miau-container python manage.py migrate
 docker compose exec miau-container python manage.py createsuperuser
 ```
 
+### 6. Conectar PGADMIN a la bd
+Haz clic derecho en Servers > Register > Server
+
+En la pestaña General, ponle el nombre que quieras (ej. "MIAU DB").
+
+En la pestaña Connection, llena los datos así:
+
+    Host name/address: db (nombre del servicio en el compose.yaml)
+
+    Port: 5432 (o puerto que hayas colocado en el env para la db)
+
+    Maintenance database: El valor de tu ${DATABASE_NAME}
+
+    Username: El valor de tu ${DATABASE_USERNAME}
+
+    Password: El valor de tu ${DATABASE_PASSWORD}
+
+Y listo, has configurado todo el backend de MIAU!
+
 ### NOTAS DE DESARROLLO
 Para mantener la integridad del proyecto, sigue estas recomendaciones:
 ## Estructura de las Apps

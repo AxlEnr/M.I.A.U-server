@@ -1,4 +1,4 @@
-from rest_framework.response import Response
+# from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from django.shortcuts import get_object_or_404
 from rest_framework import status
@@ -11,10 +11,11 @@ from rest_framework_simplejwt.exceptions import InvalidToken
 from user.models import User, UsersProfile
 from .serializers import UserSerializer
 import logging
+from miau_backend.response import ApiResponse
 
 logger = logging.getLogger(__name__)
 
-# 🔹 LOGIN Y GENERACIÓN DE TOKEN
+# LOGIN Y GENERACIÓN DE TOKEN
 class LoginView(APIView):
     def post(self, request, *args, **kwargs):
         email = request.data.get("email")
@@ -23,25 +24,25 @@ class LoginView(APIView):
         try:
             user = User.objects.get(email=email)
             if not user.check_password(password):  # Verificar la contraseña
-                return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+                return ApiResponse.error("Credenciales inválidas", status.HTTP_400_BAD_REQUEST)
             if not user.is_active:
-                return Response({"error": "User is not active"}, status=status.HTTP_400_BAD_REQUEST)
+                return ApiResponse.error("Tu usuario está inactivo, contacta a soporte para activarlo", status.HTTP_403_FORBIDDEN)
         except User.DoesNotExist:
-            return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+            return ApiResponse.error("Credenciales inválidas", status.HTTP_400_BAD_REQUEST)
 
-        # 🔹 Generamos los tokens
+        # Generamos los tokens
         refresh = RefreshToken.for_user(user)
 
-        # 🔹 Serializamos el usuario para devolver sus datos
+        # Serializamos el usuario para devolver sus datos
         user_data = UserSerializer(user).data
 
-        return Response({
+        return ApiResponse.success({
             "refresh": str(refresh),
             "access": str(refresh.access_token),
-            "user": user_data  # Incluimos los datos del usuario
-        }, status=status.HTTP_200_OK)
+            "user": user_data 
+        }, status.HTTP_200_OK)
 
-# 🔹 OBTENER USUARIO DE LA SESIÓN ACTUAL (Requiere autenticación)
+# OBTENER USUARIO DE LA SESIÓN ACTUAL (Requiere autenticación)
 @api_view(['GET'])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
@@ -77,8 +78,8 @@ def signup_user(request):
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return ApiResponse.success(serializer.data, status.HTTP_201_CREATED)
+    return ApiResponse.error(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
 # 🔹 ACTUALIZAR DATOS DE USUARIO
 @api_view(['PUT'])
