@@ -50,5 +50,17 @@ services:
     env_file:
       - .env
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: mailpit
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_PORT}:8025"
+      - "${SMTP_PORT}:1025"
+    volumes:
+      - .:/app 
+    environment:
+      - MP_MAX_MESSAGES=5000
+
 volumes:
   postgres_data:

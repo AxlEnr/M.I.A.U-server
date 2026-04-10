@@ -9,7 +9,7 @@ urlpatterns = [
     path('users/<int:user_id>/', views.get_user_by_id),
     path('users/me/', views.get_logged_in_user), 
     path('users/signup/', views.signup_user),
-    path('users/update/<int:user_id>/', views.update_data_user),
+    path('users/update/<int:user_id>', views.update_data_user),
     path('users/delete/<int:user_id>/', views.delete_user),
     path('users/login/', LoginView.as_view(), name='login'),
     path('users/logout/', views.logout, name='logout'), 

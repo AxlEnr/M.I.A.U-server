@@ -4,13 +4,14 @@ from rest_framework.response import Response as ResponseRest
 class ApiResponse():
 
     @staticmethod
-    def error(message: str, http_code: int): 
+    def error(message: str, http_code: int, data: any = None): 
         return ResponseRest({
             "success": False,
             "data": None,
             "error": {
                 "code": http_code,
-                "message": message
+                "message": message,
+                "data": data
             }
         }, status=http_code)
     
