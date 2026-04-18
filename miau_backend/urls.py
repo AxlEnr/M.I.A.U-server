@@ -15,20 +15,7 @@ urlpatterns = [
     path('', home, name='home'),
     
     # Rutas de las aplicaciones
-    path('api/', include('adoptionfilters.urls')),
-    path('api/chats/', include('chats.urls')),
-    path('api/', include('codeQR.urls')),
-    path('api/', include('comments.urls')),
-    path('api/', include('emailverification.urls')),
-    path('api/', include('imgspost.urls')),
-    path('api/', include('logs.urls')),
-    path('api/', include('notifications.urls')),
-    path('api/', include('passwordresets.urls')),
-    path('api/', include('pet.urls')),
-    path('api/', include('post.urls')),
-    path('api/', include('statushistory.urls')),
-    path('api/', include('user_api.urls')),
-    path('api/', include('usersprofile.urls')),
+    path('api/', include('miau_backend.api.urls')),
 ]
 
 if settings.DEBUG:

@@ -1,37 +1,53 @@
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from rest_framework import status
-from rest_framework.views import APIView
+from rest_framework import viewsets, status, permissions
 from django.shortcuts import get_object_or_404
 from .models import StatusHistory
 from .serializers import StatusHistorySerializer
+from miau_backend.response import ApiResponse
 
-# StatusHistory Views
-@api_view(['GET', 'POST'])
-def status_history_list(request):
-    if request.method == 'GET':
-        histories = StatusHistory.objects.all()
-        serializer = StatusHistorySerializer(histories, many=True)
-        return Response(serializer.data)
-    elif request.method == 'POST':
-        serializer = StatusHistorySerializer(data=request.data)
+class StatusHistoryViewSet(viewsets.ModelViewSet):
+    queryset = StatusHistory.objects.all()
+    serializer_class = StatusHistorySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            return StatusHistory.objects.all()
+        return StatusHistory.objects.filter(petId__userId=user)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return ApiResponse.success(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.petId.userId != request.user and not request.user.is_superuser:
+            return ApiResponse.error("No tienes permiso para ver este historial", status.HTTP_403_FORBIDDEN)
+        serializer = self.get_serializer(instance)
+        return ApiResponse.success(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return ApiResponse.success(serializer.data, status=status.HTTP_201_CREATED)
+        return ApiResponse.error(serializer.errors, status.HTTP_400_BAD_REQUEST, serializer.errors)
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def status_history_detail(request, history_id):
-    history = get_object_or_404(StatusHistory, id=history_id)
-    if request.method == 'GET':
-        serializer = StatusHistorySerializer(history)
-        return Response(serializer.data)
-    elif request.method == 'PUT':
-        serializer = StatusHistorySerializer(history, data=request.data, partial=True)
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        if instance.petId.userId != request.user and not request.user.is_superuser:
+            return ApiResponse.error("No tienes permiso para editar este historial", status.HTTP_403_FORBIDDEN)
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    elif request.method == 'DELETE':
-        history.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            return ApiResponse.success(serializer.data)
+        return ApiResponse.error(serializer.errors, status.HTTP_400_BAD_REQUEST, serializer.errors)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.petId.userId != request.user and not request.user.is_superuser:
+            return ApiResponse.error("No tienes permiso para eliminar este historial", status.HTTP_403_FORBIDDEN)
+        self.perform_destroy(instance)
+        return ApiResponse.success('Historial de estado eliminado exitosamente', status.HTTP_204_NO_CONTENT)

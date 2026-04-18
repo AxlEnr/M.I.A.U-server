@@ -1,37 +1,30 @@
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from rest_framework import status
-from rest_framework.views import APIView
-from django.shortcuts import get_object_or_404
+from rest_framework import viewsets, status, permissions
 from .models import EmailVerifications
 from .serializers import EmailVerificationsSerializer
+from miau_backend.response import ApiResponse
 
-# EmailVerifications Views
-@api_view(['GET', 'POST'])
-def email_verifications_list(request):
-    if request.method == 'GET':
-        verifications = EmailVerifications.objects.all()
-        serializer = EmailVerificationsSerializer(verifications, many=True)
-        return Response(serializer.data)
-    elif request.method == 'POST':
-        serializer = EmailVerificationsSerializer(data=request.data)
+class EmailVerificationsViewSet(viewsets.ModelViewSet):
+    queryset = EmailVerifications.objects.all()
+    serializer_class = EmailVerificationsSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return ApiResponse.error("No tienes permiso para ver esta información.", status.HTTP_403_FORBIDDEN)
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return ApiResponse.success(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return ApiResponse.error("No tienes permiso para ver esta información.", status.HTTP_403_FORBIDDEN)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return ApiResponse.success(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['GET', 'PUT', 'DELETE'])
-def email_verifications_detail(request, verification_id):
-    verification = get_object_or_404(EmailVerifications, id=verification_id)
-    if request.method == 'GET':
-        serializer = EmailVerificationsSerializer(verification)
-        return Response(serializer.data)
-    elif request.method == 'PUT':
-        serializer = EmailVerificationsSerializer(verification, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    elif request.method == 'DELETE':
-        verification.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            return ApiResponse.success(serializer.data, status.HTTP_201_CREATED)
+        return ApiResponse.error(serializer.errors, status.HTTP_400_BAD_REQUEST, serializer.errors)

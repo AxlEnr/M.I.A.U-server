@@ -1,9 +1,16 @@
-from user.models import User
-from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
+from .models import User, UsersProfile
+from django.contrib.auth.hashers import make_password
+
+class UsersProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UsersProfile
+        fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
     profile_picture = serializers.SerializerMethodField()
+    user_profile = UsersProfileSerializer(read_only=True)
+
     class Meta:
         model = User
         fields = [
@@ -26,16 +33,16 @@ class UserSerializer(serializers.ModelSerializer):
             'is_active',
             'is_staff',
             'is_superuser',
-            'groups',
-            'user_permissions',
-            'profile_picture'
+            'profile_picture',
+            'user_profile',
+            'password'
         ]
         extra_kwargs = {'password': {'write_only': True}}
     
     def create(self, validated_data):
         password = validated_data.pop('password')
         user = User(**validated_data)
-        user.password = make_password(password)  # Encriptamos la contraseña manualmente
+        user.password = make_password(password)
         user.save()
         return user
     

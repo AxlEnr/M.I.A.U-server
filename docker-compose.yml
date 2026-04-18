@@ -1,10 +1,6 @@
 services:
   db:
     image: postgres:17
-    environment:
-      POSTGRES_DB: ${DATABASE_NAME}
-      POSTGRES_USER: ${DATABASE_USERNAME}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -30,23 +26,9 @@ services:
     build: .
     container_name: miau-backend
     ports:
-      - "8765:8000"
+      - "8765:8765"
     depends_on:
       - db
-    volumes:
-      - .:/app 
-    environment:
-      DJANGO_SECRET_KEY: ${SECRET_KEY}
-      DEBUG: ${DEBUG}
-      DJANGO_LOGLEVEL: ${DJANGO_LOGLEVEL}
-      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
-      DATABASE_ENGINE: ${DATABASE_ENGINE}
-      DATABASE_NAME: ${DATABASE_NAME}
-      DATABASE_USERNAME: ${DATABASE_USERNAME}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      DATABASE_HOST: ${DATABASE_HOST}
-      DATABASE_PORT: ${DATABASE_PORT}
-    command: gunicorn --reload --bind 0.0.0.0:8000 miau_backend.wsgi:application
     env_file:
       - .env
 
@@ -57,8 +39,6 @@ services:
     ports:
       - "${MAILPIT_PORT}:8025"
       - "${SMTP_PORT}:1025"
-    volumes:
-      - .:/app 
     environment:
       - MP_MAX_MESSAGES=5000
 

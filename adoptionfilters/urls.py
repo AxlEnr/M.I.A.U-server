@@ -1,9 +1,10 @@
-from django.urls import path
-from . import views
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import AdoptionFiltersViewSet
+
+router = DefaultRouter()
+router.register(r'', AdoptionFiltersViewSet, basename='adoptionfilters')
 
 urlpatterns = [
-    # AdoptionFilters URLs
-    path('adoption-filters/', views.adoption_filters_list, name='adoption_filters_list'),
-    path('adoption-filters/<uuid:filter_id>/', views.adoption_filters_detail, name='adoption_filters_detail'),
-
+    path('', include(router.urls)),
 ]

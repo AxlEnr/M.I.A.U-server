@@ -1,42 +1,47 @@
-from django.shortcuts import render
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework import viewsets, status, permissions
 from .models import CodeQR
-from .serializer import CodeQRSerializer
-from django.shortcuts import get_object_or_404 #Show 404 Errors
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
-# Create your views here.
+from .serializers import CodeQRSerializer
+from miau_backend.response import ApiResponse
 
-#GET ALL USERS IN DB
-@api_view(['GET'])
-def get_all_QR(request):
-    qr = CodeQR.objects.all()
-    serializer = CodeQRSerializer(qr, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+class CodeQRViewSet(viewsets.ModelViewSet):
+    queryset = CodeQR.objects.all()
+    serializer_class = CodeQRSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-#UPDATE USER DATA
-@api_view(['PUT'])
-def update_data_QR(request, qr_id ):
-    qr = get_object_or_404(CodeQR, id=qr_id)
-    serializer = CodeQRSerializer(qr, data=request.data, partial=True)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [permissions.IsAdminUser()]
+        return [permissions.IsAdminUser()]
 
-@api_view(['PUT'])
-def delete_QR(request, qr_id):
-    qr = get_object_or_404(qr, id=qr_id)
-    qr.delete()
-    return Response({'message': 'Codigo QR desactivado'}, status=status.HTTP_200_OK)
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return ApiResponse.success(serializer.data)
 
-#POST USER DATA
-@api_view(['POST'])
-def create_QR(request):
-    serializer = CodeQRSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # Devuelve los errores del serializador
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return ApiResponse.success(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return ApiResponse.success(serializer.data, status.HTTP_201_CREATED)
+        return ApiResponse.error(serializer.errors, status.HTTP_400_BAD_REQUEST, serializer.errors)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        if serializer.is_valid():
+            serializer.save()
+            return ApiResponse.success(serializer.data)
+        return ApiResponse.error(serializer.errors, status.HTTP_400_BAD_REQUEST, serializer.errors)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return ApiResponse.success('Código QR eliminado exitosamente', status.HTTP_204_NO_CONTENT)

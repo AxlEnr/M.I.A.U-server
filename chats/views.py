@@ -1,148 +1,99 @@
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.db.models import Prefetch, Q, Count, Max
+from rest_framework import viewsets, status, permissions
+from rest_framework.decorators import action
+from django.db.models import Q, Count, Max
 from django.utils import timezone
+
 from .models import Chat, Message
-from .serializers import ChatSerializer, MessageSerializer, MessageCreateSerializer
+from .serializers import ChatSerializer, MessageSerializer, MessageCreateSerializer, ChatCreateSerializer
 from user.models import User
+from miau_backend.response import ApiResponse
 
-
-
-class ChatListCreateView(generics.ListCreateAPIView):  # Cambiado a ListCreateAPIView
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+class ChatViewSet(viewsets.ModelViewSet):
+    queryset = Chat.objects.all()
     serializer_class = ChatSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        return Chat.objects.filter(participants=user)\
-            .prefetch_related('participants')\
+        return Chat.objects.filter(participants=user) \
+            .prefetch_related('participants') \
             .annotate(
                 last_message_time=Max('messages__timestamp'),
                 unread_count=Count(
                     'messages',
                     filter=Q(messages__read=False) & ~Q(messages__sender=user)
                 )
-            )\
+            ) \
             .order_by('-last_message_time')
 
-    def create(self, request, *args, **kwargs):
-        participant_id = request.data.get('participant_id')
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return ApiResponse.success(serializer.data)
+
+    @action(detail=False, methods=['post'], serializer_class=ChatCreateSerializer)
+    def create_chat(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        participant_id = serializer.validated_data['participant_id']
+
         try:
             participant = User.objects.get(id=participant_id)
         except User.DoesNotExist:
-            return Response(
-                {'error': 'Usuario no encontrado'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return ApiResponse.error('Usuario no encontrado', status.HTTP_404_NOT_FOUND)
 
         if participant == request.user:
-            return Response(
-                {'error': 'No puedes chatear contigo mismo'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return ApiResponse.error('No puedes chatear contigo mismo', status.HTTP_400_BAD_REQUEST)
 
-        existing_chat = Chat.objects.filter(participants=request.user)\
+        existing_chat = Chat.objects.filter(participants=request.user) \
             .filter(participants=participant).first()
         
         if existing_chat:
-            serializer = self.get_serializer(existing_chat)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            chat_serializer = ChatSerializer(existing_chat)
+            return ApiResponse.success(chat_serializer.data, status.HTTP_200_OK)
 
         chat = Chat.objects.create()
         chat.participants.add(request.user, participant)
-        serializer = self.get_serializer(chat)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        chat_serializer = ChatSerializer(chat)
+        return ApiResponse.success(chat_serializer.data, status.HTTP_201_CREATED)
 
-class ChatListView(generics.ListAPIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-    serializer_class = ChatSerializer
-
-    def get_queryset(self):
-        user = self.request.user
-        return Chat.objects.filter(participants=user)\
-            .prefetch_related('participants')\
-            .annotate(
-                last_message_time=Max('messages__timestamp'),
-                unread_count=Count(
-                    'messages',
-                    filter=Q(messages__read=False) & ~Q(messages__sender=user)
-                )
-            )\
-            .order_by('-last_message_time')
-
-class ChatCreateView(generics.CreateAPIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-    serializer_class = ChatSerializer
-
-    def create(self, request, *args, **kwargs):
-        participant_id = request.data.get('participant_id')
-        try:
-            participant = User.objects.get(id=participant_id)
-        except User.DoesNotExist:
-            return Response(
-                {'error': 'Usuario no encontrado'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        if participant == request.user:
-            return Response(
-                {'error': 'No puedes chatear contigo mismo'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        existing_chat = Chat.objects.filter(participants=request.user)\
-            .filter(participants=participant).first()
-        
-        if existing_chat:
-            serializer = self.get_serializer(existing_chat)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        chat = Chat.objects.create()
-        chat.participants.add(request.user, participant)
-        serializer = self.get_serializer(chat)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-class MessageListView(generics.ListAPIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+class MessageViewSet(viewsets.ModelViewSet):
+    queryset = Message.objects.all()
     serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return Message.objects.filter(
-            chat_id=self.kwargs['chat_id'],
+            chat_id=self.kwargs['chat_pk'], # Use chat_pk for nested routing
             chat__participants=self.request.user
         ).select_related('sender').order_by('timestamp')
 
-class MessageCreateView(generics.CreateAPIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-    serializer_class = MessageCreateSerializer
+    def create(self, request, *args, **kwargs):
+        serializer = MessageCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-    def perform_create(self, serializer):
-        chat = Chat.objects.get(
-            id=self.kwargs['chat_id'],
-            participants=self.request.user
-        )
-        serializer.save(chat=chat, sender=self.request.user)
+        try:
+            chat = Chat.objects.get(
+                id=self.kwargs['chat_pk'],
+                participants=self.request.user
+            )
+        except Chat.DoesNotExist:
+            return ApiResponse.error('Chat no encontrado o no autorizado', status.HTTP_404_NOT_FOUND)
 
-class MarkMessagesAsReadView(generics.UpdateAPIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+        message = serializer.save(chat=chat, sender=request.user)
+        response_serializer = self.get_serializer(message)
+        return ApiResponse.success(response_serializer.data, status.HTTP_201_CREATED)
 
-    def update(self, request, *args, **kwargs):
+    @action(detail=False, methods=['post'], url_path='mark-read')
+    def mark_messages_as_read(self, request, chat_pk=None):
         messages = Message.objects.filter(
-            chat_id=kwargs['chat_id'],
+            chat_id=chat_pk,
             chat__participants=self.request.user,
             read=False
         ).exclude(sender=self.request.user)
         
         updated = messages.update(read=True, read_at=timezone.now())
-        return Response(
+        return ApiResponse.success(
             {'updated_count': updated},
             status=status.HTTP_200_OK
         )

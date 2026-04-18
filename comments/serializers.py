@@ -1,26 +1,30 @@
 from rest_framework import serializers
 from .models import Comments
-from django.contrib.auth import get_user_model
+from user.serializers import UserSerializer
+from post.serializers import PostSerializer
 from user.models import User
-
-User = get_user_model()
+from post.models import Post
 
 class CommentsSerializer(serializers.ModelSerializer):
-    user = serializers.SerializerMethodField()
+    userId = UserSerializer(read_only=True)
+    userId_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        source='userId',
+        write_only=True,
+        required=False
+    )
+    postId = PostSerializer(read_only=True)
+    postId_id = serializers.PrimaryKeyRelatedField(
+        queryset=Post.objects.all(),
+        source='postId',
+        write_only=True,
+        required=True
+    )
 
     class Meta:
         model = Comments
-        fields = '__all__'
+        fields = ['id', 'comment', 'commentDate', 'postId', 'postId_id', 'userId', 'userId_id']
+        read_only_fields = ['commentDate']
 
-    def get_user(self, obj):
-        try:
-            user = User.objects.get(id=obj.userId.id)
-            return {
-                "id": user.id,
-                "name": user.name + " " + user.first_name 
-            }
-        except User.DoesNotExist:
-            return {
-                "id": None,
-                "name": "Usuario no encontrado"
-            }
+    def to_internal_id(self, data):
+        return data.get('id')

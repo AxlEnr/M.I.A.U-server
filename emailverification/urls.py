@@ -1,8 +1,10 @@
-from django.urls import path
-from . import views
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import EmailVerificationsViewSet
+
+router = DefaultRouter()
+router.register(r'', EmailVerificationsViewSet, basename='emailverification')
 
 urlpatterns = [
-    # EmailVerifications URLs
-    path('email-verifications/', views.email_verifications_list, name='email_verifications_list'),
-    path('email-verifications/<uuid:verification_id>/', views.email_verifications_detail, name='email_verifications_detail'),
+    path('', include(router.urls)),
 ]

@@ -1,20 +1,12 @@
-# pet/serializers.py
 from rest_framework import serializers
 from .models import Pet
-from user.models import User
-from user_api.serializers import UserSerializer  # Asegúrate de tener este serializador
 
 class PetSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)  # Asegúrate de que este campo esté correctamente definido
+    image = serializers.ImageField(required=False)
     
     class Meta:
         model = Pet
-        fields = [
-            'id', 'name', 'age', 'breed', 'size', 'petDetails', 
-            'userId', 'statusAdoption', 'qrId', 'user'  # Incluye el campo 'user' aquí
-        ]
-        read_only_fields = ('userId',)
+        fields = '__all__'
         extra_kwargs = {
-            'qrId': {'required': False}  # Hace que el campo no sea obligatorio
+            'image': {'required': False}
         }
-        depth = 1  # Esto incluirá los objetos relacionados anidados

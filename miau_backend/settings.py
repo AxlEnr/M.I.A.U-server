@@ -56,7 +56,6 @@ INSTALLED_APPS = [
     'passwordresets.apps.PasswordresetsConfig',
     'post.apps.PostConfig',
     'statushistory.apps.StatushistoryConfig',
-    'usersprofile.apps.UsersprofileConfig',
     'pet.apps.PetConfig',
     "corsheaders",
 ]
