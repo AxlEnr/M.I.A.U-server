@@ -5,11 +5,8 @@ from codeQR.models import CodeQR
 class Pet(models.Model):
     class SizeChoices(models.TextChoices):
         PEQUENO = 'Pequeño', 'Pequeño'
-        PEQUENO_ALT = 'Pequeno', 'Pequeno'
         MEDIANO = 'Mediano', 'Mediano'
-        MEDIANO_ALT = 'Mediano', 'Mediano'
         GRANDE = 'Grande', 'Grande'
-        GRANDE_ALT = 'Grande', 'Grande'
 
     class StatusAdoptions(models.IntegerChoices):
         ADOPTED = 1, 'This pet has family'

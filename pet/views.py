@@ -19,6 +19,7 @@ class PetViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
+            serializer.image = enco
             serializer.save(userId=request.user)
             return ApiResponse.success(serializer.data, status.HTTP_201_CREATED)
         return ApiResponse.error(serializer.errors, status.HTTP_400_BAD_REQUEST, serializer.errors)

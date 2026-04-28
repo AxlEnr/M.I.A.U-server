@@ -43,7 +43,7 @@ class ImgsPostViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save(idPost=post)
-            return ApiResponse.success(serializer.data, status=status.HTTP_201_CREATED)
+            return ApiResponse.success(serializer.data, status.HTTP_201_CREATED)
         return ApiResponse.error(serializer.errors, status.HTTP_400_BAD_REQUEST, serializer.errors)
 
     def update(self, request, *args, **kwargs):

@@ -2,8 +2,6 @@ from rest_framework import serializers
 from .models import ImgsPost
 
 class ImgsPostSerializer(serializers.ModelSerializer):
-    imgURL = serializers.SerializerMethodField()
-
     class Meta:
         model = ImgsPost
         fields = ['id', 'imgURL', 'idPost']

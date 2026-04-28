@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import User, UsersProfile
 from django.contrib.auth.hashers import make_password
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 class UsersProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,7 +38,15 @@ class UserSerializer(serializers.ModelSerializer):
             'user_profile',
             'password'
         ]
-        extra_kwargs = {'password': {'write_only': True}}
+        extra_kwargs = {'password': {'write_only': True,
+        'required': False,
+        'allow_null': True,
+        'allow_blank': True}}
+
+    def get_permissions(self):
+        if self.action in ['create', 'login', 'reset_password', 'signup']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
     
     def create(self, validated_data):
         password = validated_data.pop('password')
