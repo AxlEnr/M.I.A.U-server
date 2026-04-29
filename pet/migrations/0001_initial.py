@@ -9,7 +9,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('codeQR', '0001_initial'),
         ('user', '0001_initial'),
     ]
 
@@ -23,7 +22,6 @@ class Migration(migrations.Migration):
                 ('breed', models.CharField(max_length=30)),
                 ('size', models.CharField(choices=[('Pequeño', 'Pequeño'), ('Mediano', 'Mediano'), ('Grande', 'Grande')], max_length=10)),
                 ('petDetails', models.CharField(blank=True, max_length=254, null=True)),
-                ('qrId', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='codeQR.codeqr')),
                 ('userId', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='user.user')),
             ],
         ),

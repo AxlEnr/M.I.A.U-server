@@ -8,6 +8,7 @@ from django.core.files.base import ContentFile
 from .models import CodeQR
 from .serializers import CodeQRSerializer
 from miau_backend.response import ApiResponse
+import json
 
 class CodeQRViewSet(viewsets.ModelViewSet):
     queryset = CodeQR.objects.all()
@@ -61,7 +62,24 @@ class CodeQRViewSet(viewsets.ModelViewSet):
             return ApiResponse.error("Mascota no encontrada", status.HTTP_404_NOT_FOUND)
 
         qr = qrcode.QRCode(version=1, box_size=10, border=5)
-        qr.add_data(f"pet:{pet_id}")
+        status_pet = pet.statusAdoption == 1 if 'Adoptado' else (
+            pet.statusAdoption == 0 if 'Perdido' else 'Buscando Familia'
+        )
+
+        status_options = {0: 'Perdido', 1: 'Adoptado', 2: 'Buscando familia'} 
+        status_pet = status_options.get(pet.statusAdoption, "Desconocido") 
+        user = pet.userId
+
+        data_to_encode = {
+            "Nombre": pet.name,
+            "Edad": pet.age,
+            "Status": status_pet,
+            "Nombre del Dueño": f"{user.name} {user.first_name}",
+            "Email de contacto": user.email,
+            "NOTA": "POR FAVOR SI ENCONTRÓ UNA MASCOTA EN LA CALLE CON ESTE QR, CONTACTE AL DUEÑO CUANTO ANTES A TRAVÉS DE SU CORREO O DE LA APP M.I.A.U"
+        }
+
+        qr.add_data(json.dumps(data_to_encode, ensure_ascii=False))
         qr.make(fit=True)
 
         img = qr.make_image(fill_color="black", back_color="white")
@@ -69,17 +87,19 @@ class CodeQRViewSet(viewsets.ModelViewSet):
         img.save(buffer, format='PNG')
         buffer.seek(0)
 
-        qr_code_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        raw_bytes = buffer.getvalue()
+        qr_code_base64 = base64.b64encode(raw_bytes).decode('utf-8')
+
+        # Para la base de datos (Archivo real)
+        data = ContentFile(raw_bytes, name=f'qr_pet_{pet.id}.png')
+
+        # Para la respuesta JSON (String Base64)
         qr_code_data = f"data:image/png;base64,{qr_code_base64}"
 
         code_qr = CodeQR.objects.create(
-            qr_code_url=qr_code_data,
-            pdf_url=""
+            pet=pet,
+            qr_image=data,
         )
-
-        pet.qrId = code_qr
-        pet.save()
-
         return ApiResponse.success({
             'qr_code': qr_code_data,
             'qr_id': code_qr.id,

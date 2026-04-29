@@ -2,6 +2,7 @@ from rest_framework import viewsets, status, permissions
 from .models import Pet
 from .serializers import PetSerializer
 from miau_backend.response import ApiResponse
+from rest_framework.decorators import action
 
 class PetViewSet(viewsets.ModelViewSet):
     queryset = Pet.objects.all()
@@ -19,7 +20,6 @@ class PetViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.image = enco
             serializer.save(userId=request.user)
             return ApiResponse.success(serializer.data, status.HTTP_201_CREATED)
         return ApiResponse.error(serializer.errors, status.HTTP_400_BAD_REQUEST, serializer.errors)
@@ -55,3 +55,16 @@ class PetViewSet(viewsets.ModelViewSet):
         
         self.perform_destroy(instance)
         return ApiResponse.success('Mascota eliminada exitosamente', status.HTTP_204_NO_CONTENT)
+    
+    @action(detail=False, methods=['get'], url_path='my-pets')
+    def get_my_pets(self, request):
+        user_id = request.user.id
+        from .models import Pet
+        pets = Pet.objects.filter(userId=user_id)
+        if not pets.exists():
+            return ApiResponse.error("El usuario no tiene mascotas", status.HTTP_404_NOT_FOUND)
+        serializer = self.get_serializer(pets, many=True)
+        return ApiResponse.success(serializer.data, status.HTTP_200_OK)
+        
+
+
