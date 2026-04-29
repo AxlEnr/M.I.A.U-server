@@ -6,7 +6,7 @@ class Comments(models.Model):
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     postId = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
-    userId = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    userId = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments', blank=True)
 
     class Meta:
         db_table = 'comments_comments'
