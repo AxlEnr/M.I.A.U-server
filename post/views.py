@@ -27,10 +27,10 @@ class PostViewSet(viewsets.ModelViewSet):
                 return ApiResponse.error('La mascota no existe o no te pertenece.', status.HTTP_400_BAD_REQUEST)
             
             post_data = request.data.copy()
-            if 'state' not in post_data and pet.state:
-                post_data['state'] = pet.state
-            if 'city' not in post_data and pet.city:
-                post_data['city'] = pet.city
+            if 'state' not in post_data:
+                post_data['state'] = request.user.state or ''
+            if 'city' not in post_data:
+                post_data['city'] = request.user.city or ''
 
             serializer = self.get_serializer(data=post_data)
             if serializer.is_valid():

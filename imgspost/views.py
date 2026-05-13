@@ -12,6 +12,8 @@ class ImgsPostViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        if self.action == 'list' or self.action == 'imgs_by_post':
+            return ImgsPost.objects.all()
         if user.is_superuser:
             return ImgsPost.objects.all()
         return ImgsPost.objects.filter(idPost__userId=user)

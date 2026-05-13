@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('qr_code_url', models.TextField()),
                 ('qr_image', models.ImageField(blank=True, null=True, upload_to='qrs/')),
                 ('creation_date', models.DateField(auto_now=True)),
-                ('pet', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='qr', to='pet.pet')),
+                ('pet', models.OneToOneField(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='qr', to='pet.pet')),
             ],
         ),
     ]

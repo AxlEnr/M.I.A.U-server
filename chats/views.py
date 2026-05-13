@@ -31,6 +31,31 @@ class ChatViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return ApiResponse.success(serializer.data)
 
+    def create(self, request, *args, **kwargs):
+        participant_id = request.data.get('participant_id')
+        if not participant_id:
+            return ApiResponse.error('Se requiere participant_id', status.HTTP_400_BAD_REQUEST)
+
+        try:
+            participant = User.objects.get(id=participant_id)
+        except User.DoesNotExist:
+            return ApiResponse.error('Usuario no encontrado', status.HTTP_404_NOT_FOUND)
+
+        if participant == request.user:
+            return ApiResponse.error('No puedes chatear contigo mismo', status.HTTP_400_BAD_REQUEST)
+
+        existing_chat = Chat.objects.filter(participants=request.user) \
+            .filter(participants=participant).first()
+
+        if existing_chat:
+            chat_serializer = ChatSerializer(existing_chat)
+            return ApiResponse.success(chat_serializer.data, status.HTTP_200_OK)
+
+        chat = Chat.objects.create()
+        chat.participants.add(request.user, participant)
+        chat_serializer = ChatSerializer(chat)
+        return ApiResponse.success(chat_serializer.data, status.HTTP_201_CREATED)
+
     @action(detail=False, methods=['post'], serializer_class=ChatCreateSerializer)
     def create_chat(self, request):
         serializer = self.get_serializer(data=request.data)

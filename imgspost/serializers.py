@@ -6,11 +6,13 @@ class ImgsPostSerializer(serializers.ModelSerializer):
         model = ImgsPost
         fields = ['id', 'imgURL', 'idPost']
 
-    def get_imgURL(self, obj):
-        if obj.imgURL:
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.imgURL:
             request = self.context.get('request')
-            url = obj.imgURL.url
+            file_url = instance.imgURL.url
             if request:
-                return request.build_absolute_uri(url)
-            return url
-        return None
+                data['imgURL'] = request.build_absolute_uri(file_url)
+            else:
+                data['imgURL'] = file_url
+        return data

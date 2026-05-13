@@ -31,6 +31,8 @@ services:
       - db
     env_file:
       - .env
+    volumes:
+      - media_data:/app/media
 
   mailpit:
     image: axllent/mailpit:latest
@@ -44,3 +46,4 @@ services:
 
 volumes:
   postgres_data:
+  media_data:

@@ -41,7 +41,7 @@ class CommentsViewSet(viewsets.ModelViewSet):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
 
-        if instance.user != request.user:
+        if instance.userId != request.user:
             return ApiResponse.error("No tienes permiso para editar este comentario.", status.HTTP_403_FORBIDDEN)
 
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
@@ -53,7 +53,7 @@ class CommentsViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
 
-        if instance.user != request.user:
+        if instance.userId != request.user:
             return ApiResponse.error("No tienes permiso para eliminar este comentario.", status.HTTP_403_FORBIDDEN)
 
         instance.delete()

@@ -113,7 +113,7 @@ WSGI_APPLICATION = 'miau_backend.wsgi.application'
 
 DATABASES = {
      'default': {
-         'ENGINE': 'django.db.backends.postgresql',
+         'ENGINE': os.getenv('DATABASE_ENGINE', 'django.db.backends.postgresql'),
          'NAME': os.getenv('DATABASE_NAME', 'polls'),
          'USER': os.getenv('DATABASE_USERNAME', 'dbuser'),
          'PASSWORD': os.getenv('DATABASE_PASSWORD', 'dbpassword'),
