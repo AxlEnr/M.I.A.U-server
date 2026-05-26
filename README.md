@@ -1,7 +1,7 @@
 # 🐾 MIAU BACKEND DJANGO
 
 Este es el servicio de backend para la plataforma **MIAU**, desarrollado con **Django 5.1**. El proyecto utiliza una arquitectura MVC simplificada y está completamente contenedorizado con **Docker** para asegurar un entorno de desarrollo consistente.
-
+ 
 ---
 
 ## Guía de Instalación y Configuración
