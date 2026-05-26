@@ -1,0 +1,149 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # =========================================================
+  # STAGE 1: Pruebas automatizadas
+  # =========================================================
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install --no-cache-dir -r requirements.prod.txt
+
+      - name: Aplicar migraciones
+        env:
+          SECRET_KEY: github-actions-ci-test-key-not-for-production
+          DEBUG: "0"
+          DATABASE_ENGINE: django.db.backends.postgresql
+          DATABASE_NAME: test_db
+          DATABASE_USERNAME: test_user
+          DATABASE_PASSWORD: test_pass
+          DATABASE_HOST: localhost
+          DATABASE_PORT: "5432"
+          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+        run: python manage.py migrate
+
+      - name: Ejecutar tests
+        env:
+          SECRET_KEY: github-actions-ci-test-key-not-for-production
+          DEBUG: "0"
+          DATABASE_ENGINE: django.db.backends.postgresql
+          DATABASE_NAME: test_db
+          DATABASE_USERNAME: test_user
+          DATABASE_PASSWORD: test_pass
+          DATABASE_HOST: localhost
+          DATABASE_PORT: "5432"
+          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+        run: python manage.py test
+
+  # =========================================================
+  # STAGE 2: Build y push de la imagen Docker
+  # =========================================================
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Login en GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Metadata de la imagen Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,prefix=sha-
+            type=ref,event=branch
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build y push de la imagen
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # =========================================================
+  # STAGE 3: Despliegue en el servidor
+  # =========================================================
+  deploy:
+    name: Desplegar en servidor
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+      - name: Desplegar via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            # Ir al directorio del proyecto
+            cd ${{ secrets.SERVER_PROJECT_PATH }}
+
+            # Actualizar código fuente
+            git pull origin main
+
+            # Reconstruir y reiniciar contenedores
+            docker compose down
+            docker compose up -d --build
+
+            # Aplicar migraciones pendientes
+            docker compose exec -T miau-container python manage.py migrate --noinput
+
+            # Eliminar imágenes viejas para liberar espacio
+            docker image prune -f
+
+            echo "✅ Despliegue completado con éxito"
