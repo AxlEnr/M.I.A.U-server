@@ -122,7 +122,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    environment: production
+    environment: Secrets
 
     steps:
       - name: Desplegar via SSH
