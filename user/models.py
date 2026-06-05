@@ -27,7 +27,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class StatusChoices(models.IntegerChoices):
         ACTIVATED = 1, "The account is active"
-        DEACTIVATED = 2, "The account is not active"
 
     # 🔹 Campos del usuario
     name = models.CharField(max_length=30)
@@ -59,6 +58,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     def save(self, *args, **kwargs):
         if self.password and not self.password.startswith("pbkdf2_"):
             self.password = make_password(self.password)
+        self.is_active = True
+        self.status = self.StatusChoices.ACTIVATED
         super().save(*args, **kwargs)
 
 # 🔹 Modelo de perfil de usuario

@@ -81,8 +81,6 @@ class UserViewSet(viewsets.ModelViewSet):
             user = User.objects.get(email=email)
             if not user.check_password(password):
                 return ApiResponse.error("Credenciales inválidas", status.HTTP_400_BAD_REQUEST)
-            if not user.is_active:
-                return ApiResponse.error("Tu usuario está inactivo", status.HTTP_403_FORBIDDEN)
         except User.DoesNotExist:
             return ApiResponse.error("Credenciales inválidas", status.HTTP_400_BAD_REQUEST)
 

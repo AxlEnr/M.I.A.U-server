@@ -38,10 +38,11 @@ class UserSerializer(serializers.ModelSerializer):
             'user_profile',
             'password'
         ]
-        extra_kwargs = {'password': {'write_only': True,
-        'required': False,
-        'allow_null': True,
-        'allow_blank': True}}
+        extra_kwargs = {
+            'password': {'write_only': True, 'required': False, 'allow_null': True, 'allow_blank': True},
+            'is_active': {'read_only': True},
+            'status': {'read_only': True},
+        }
 
     def get_permissions(self):
         if self.action in ['create', 'login', 'reset_password', 'signup']:
