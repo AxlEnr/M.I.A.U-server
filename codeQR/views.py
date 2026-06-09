@@ -67,12 +67,13 @@ class CodeQRViewSet(viewsets.ModelViewSet):
         )
 
         status_options = {0: 'Perdido', 1: 'Adoptado', 2: 'Buscando familia'} 
+        edad_options = {0: 'Cachorro', 1: 'Adulto', 2: 'Senior'}
         status_pet = status_options.get(pet.statusAdoption, "Desconocido") 
         user = pet.userId
 
         data_to_encode = {
             "Nombre": pet.name,
-            "Edad": pet.age,
+            "Rango de Edad Aproximada": edad_options.get(pet.age, "Desconocida"),
             "Status": status_pet,
             "Nombre del Dueño": f"{user.name} {user.first_name}",
             "Email de contacto": user.email,
