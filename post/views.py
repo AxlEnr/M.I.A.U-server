@@ -34,6 +34,14 @@ class PostViewSet(viewsets.ModelViewSet):
 
             serializer = self.get_serializer(data=post_data)
             if serializer.is_valid():
+                # Actualizar el statusAdoption de la mascota basado en el título
+                title = post_data.get('title', '').lower()
+                if 'perdida' in title:
+                    pet.statusAdoption = 0
+                elif 'adopción' in title or 'adopcion' in title:
+                    pet.statusAdoption = 2
+                pet.save()
+
                 serializer.save(userId=request.user, petId=pet)
                 return ApiResponse.success(serializer.data, status.HTTP_201_CREATED)
             return ApiResponse.error(serializer.errors, status.HTTP_400_BAD_REQUEST, serializer.errors)
