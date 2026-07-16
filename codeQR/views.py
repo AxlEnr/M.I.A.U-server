@@ -101,9 +101,6 @@ class CodeQRViewSet(viewsets.ModelViewSet):
         # Para la base de datos (Archivo real)
         data = ContentFile(raw_bytes, name=f'qr_pet_{pet.id}.png')
 
-        # Para la respuesta JSON (String Base64)
-        qr_code_data = f"data:image/png;base64,{qr_code_base64}"
-
         code_qr, created = CodeQR.objects.update_or_create(
             pet=pet,
             defaults={
@@ -111,8 +108,9 @@ class CodeQRViewSet(viewsets.ModelViewSet):
                 'qr_code_url': ''
             }
         )
+        url = request.build_absolute_uri(code_qr.qr_image.url) if request else code_qr.qr_image.url
         return ApiResponse.success({
-            'qr_code': qr_code_data,
+            'qr_code': url,
             'qr_id': code_qr.id,
             'pet_id': pet.id
         }, status.HTTP_201_CREATED)
