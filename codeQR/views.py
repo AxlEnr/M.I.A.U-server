@@ -67,13 +67,20 @@ class CodeQRViewSet(viewsets.ModelViewSet):
         )
 
         status_options = {0: 'Perdido', 1: 'Adoptado', 2: 'Buscando familia'} 
-        edad_options = {0: 'Cachorro', 1: 'Adulto', 2: 'Senior'}
+        edad_options = {'0': 'Cachorro', '1': 'Adulto', '2': 'Senior'}
         status_pet = status_options.get(pet.statusAdoption, "Desconocido") 
         user = pet.userId
+        
+        # Procesar edad (puede ser fecha YYYY-MM-DD o valor legado '0', '1', '2')
+        pet_age_str = str(pet.age) if pet.age else ""
+        if "-" in pet_age_str:
+            display_age = f"Nacido el {pet_age_str}"
+        else:
+            display_age = edad_options.get(pet_age_str, "Desconocida")
 
         data_to_encode = {
             "Nombre": pet.name,
-            "Rango de Edad Aproximada": edad_options.get(pet.age, "Desconocida"),
+            "Rango de Edad Aproximada": display_age,
             "Status": status_pet,
             "Nombre del Dueño": f"{user.name} {user.first_name}",
             "Email de contacto": user.email,
@@ -97,9 +104,12 @@ class CodeQRViewSet(viewsets.ModelViewSet):
         # Para la respuesta JSON (String Base64)
         qr_code_data = f"data:image/png;base64,{qr_code_base64}"
 
-        code_qr = CodeQR.objects.create(
+        code_qr, created = CodeQR.objects.update_or_create(
             pet=pet,
-            qr_image=data,
+            defaults={
+                'qr_image': data,
+                'qr_code_url': ''
+            }
         )
         return ApiResponse.success({
             'qr_code': qr_code_data,
