@@ -76,14 +76,6 @@ class PostViewSet(viewsets.ModelViewSet):
         if instance.userId != request.user and not request.user.is_superuser:
             return ApiResponse.error('No tienes permiso para eliminar este post.', status.HTTP_403_FORBIDDEN)
         
-        pet_id = instance.petId.id
         instance.delete()
-        
-        if not Post.objects.filter(petId=pet_id).exists():
-            try:
-                pet = Pet.objects.get(id=pet_id)
-                pet.delete()
-            except Pet.DoesNotExist:
-                pass
         
         return ApiResponse.success('Post eliminado exitosamente', status.HTTP_204_NO_CONTENT)
